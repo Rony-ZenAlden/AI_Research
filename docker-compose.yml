@@ -1,0 +1,138 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: neuroseek_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: neuroseek_redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: neuroseek_web
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - hf_cache:/app/.hf_cache
+      - media_data:/app/media
+      - static_data:/app/staticfiles
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             daphne -b 0.0.0.0 -p 8000 NeuroSeek_AI.asgi:application"
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: neuroseek_ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      OLLAMA_HOST: "0.0.0.0:11434"
+      # KEEP_ALIVE keeps the loaded model warm in RAM between requests.
+      # For local models on tight VPS RAM, set to "0" to unload after each call;
+      # for :cloud models this has no effect.
+      OLLAMA_KEEP_ALIVE: "5m"
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  searxng:
+    image: searxng/searxng:latest
+    container_name: neuroseek_searxng
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./services/searxng:/etc/searxng:rw
+    environment:
+      SEARXNG_BASE_URL: "http://localhost:8080/"
+      SEARXNG_SECRET: ${SEARXNG_SECRET:-please-replace-me-with-a-long-random-string}
+      UWSGI_WORKERS: "2"
+      UWSGI_THREADS: "2"
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  realtime:
+    build:
+      context: ./services/realtime
+      dockerfile: Dockerfile
+    container_name: neuroseek_realtime
+    restart: unless-stopped
+    environment:
+      REALTIME_PORT: "8001"
+      REDIS_URL: ${REDIS_URL}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      REALTIME_ALLOWED_ORIGINS: "*"
+    ports:
+      - "8001:8001"
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: neuroseek_celery
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - hf_cache:/app/.hf_cache
+      - media_data:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A NeuroSeek_AI worker -l info --concurrency=1 --max-tasks-per-child=50
+
+volumes:
+  postgres_data:
+  redis_data:
+  hf_cache:
+  media_data:
+  static_data:
+  ollama_data:

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Sign in · NeuroSeek AI{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card glass">
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div class="brand-text">
+        <div class="brand-name">NeuroSeek AI</div>
+        <div class="brand-tag">Research operating system</div>
+      </div>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-tab="login" role="tab" aria-selected="true">Sign in</button>
+      <button class="tab" data-tab="register" role="tab" aria-selected="false">Create account</button>
+    </div>
+
+    <form id="login-form" class="auth-form" data-form="login">
+      <label class="field">
+        <span class="field-label">Email</span>
+        <input type="email" name="email" required autocomplete="username" placeholder="you@example.com">
+      </label>
+      <label class="field">
+        <span class="field-label">Password</span>
+        <input type="password" name="password" required autocomplete="current-password" placeholder="••••••••">
+      </label>
+      <button type="submit" class="btn btn-primary btn-full">
+        <span class="btn-label">Sign in</span>
+        <span class="btn-spinner"></span>
+      </button>
+    </form>
+
+    <form id="register-form" class="auth-form hidden" data-form="register">
+      <label class="field">
+        <span class="field-label">Full name</span>
+        <input type="text" name="full_name" placeholder="Ada Lovelace">
+      </label>
+      <label class="field">
+        <span class="field-label">Email</span>
+        <input type="email" name="email" required autocomplete="username" placeholder="you@example.com">
+      </label>
+      <label class="field">
+        <span class="field-label">Password</span>
+        <input type="password" name="password" required minlength="8" autocomplete="new-password" placeholder="At least 8 characters">
+      </label>
+      <button type="submit" class="btn btn-primary btn-full">
+        <span class="btn-label">Create account</span>
+        <span class="btn-spinner"></span>
+      </button>
+    </form>
+
+    <div id="auth-error" class="auth-error hidden"></div>
+  </div>
+
+  <div class="auth-aside">
+    <div class="aside-line"></div>
+    <p class="muted small">
+      Search · Upload · Embed · Cite<br>
+      Lightweight retrieval-first AI research.
+    </p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{% static 'js/auth.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard · NeuroSeek AI{% endblock %}
+
+{% block content %}
+<header class="topbar glass">
+  <div class="brand small">
+    <div class="brand-mark small"></div>
+    <div class="brand-name">NeuroSeek AI</div>
+  </div>
+  <nav class="topbar-nav">
+    <a href="/app/" class="nav-link active">Dashboard</a>
+    <a href="/app/research/" class="nav-link">Research</a>
+  </nav>
+  <div class="topbar-right">
+    <div class="ws-pill" id="ws-pill" data-status="connecting">
+      <span class="ws-dot"></span>
+      <span class="ws-label" id="ws-label">connecting…</span>
+    </div>
+    <div class="user-chip">
+      <span class="user-avatar"></span>
+      <span id="user-email" class="user-email">…</span>
+    </div>
+    <button id="logout-btn" class="btn btn-ghost btn-sm">Sign out</button>
+  </div>
+</header>
+
+<div class="dashboard">
+  <!-- LEFT: documents list -->
+  <aside class="panel docs glass">
+    <div class="panel-header">
+      <h2 class="panel-title">Documents</h2>
+      <div class="panel-actions">
+        <button class="btn btn-ghost btn-xs js-load-demo"
+                data-tooltip="Queue 3 curated demo documents (Wikipedia articles).">+ demo</button>
+        <span class="badge" id="doc-count">0</span>
+      </div>
+    </div>
+    <div id="doc-list" class="doc-list">
+      <div class="empty-state docs-empty">
+        <div class="empty-icon">📚</div>
+        <div class="empty-title">No documents yet.</div>
+        <button class="btn btn-primary btn-sm js-load-demo">Try with sample data</button>
+        <div class="empty-hint muted small">
+          Loads 3 curated articles so you can see search work in seconds.<br>
+          Or upload a file / paste a URL on the right.
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- CENTER: search + results -->
+  <section class="panel center">
+    <div class="search-bar glass">
+      <div class="search-tabs" role="tablist">
+        <button type="button" class="search-tab active" data-mode="semantic" role="tab" aria-selected="true"
+                data-tooltip="Search across documents you've ingested. Uses pgvector cosine similarity.">
+          <span>Semantic</span>
+          <span class="tab-hint">your documents</span>
+        </button>
+        <button type="button" class="search-tab" data-mode="web" role="tab" aria-selected="false"
+                data-tooltip="Search the public web through SearXNG (Google, Bing, DuckDuckGo, Wikipedia).">
+          <span>Web</span>
+          <span class="tab-hint">via SearXNG</span>
+        </button>
+      </div>
+      <form id="search-form" class="search-form">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="7"/>
+          <line x1="21" y1="21" x2="16.5" y2="16.5"/>
+        </svg>
+        <input type="text" name="q" id="q" placeholder="Ask anything across your documents…" autocomplete="off">
+        <button type="submit" class="btn btn-primary btn-sm">Search</button>
+      </form>
+      <div id="recent-row" class="recent-row hidden"></div>
+    </div>
+
+    <div class="ai-panel glass" id="ai-panel">
+      <div class="ai-actions">
+        <button id="btn-summarize" type="button" class="btn btn-primary btn-sm" disabled
+                data-tooltip="Use the LLM to write a concise, cited summary of the current results.">
+          <span>✨</span> Summarize
+        </button>
+        <button id="btn-compare" type="button" class="btn btn-ghost btn-sm" disabled
+                data-tooltip="Identify where sources agree, differ, and what they don't cover.">
+          <span>⚖</span> Compare sources
+        </button>
+        <span id="ai-meta" class="muted small"></span>
+      </div>
+      <div id="ai-output" class="ai-output hidden"></div>
+    </div>
+
+    <div class="search-results glass">
+      <div class="panel-header">
+        <h2 class="panel-title" id="results-title">Results</h2>
+        <span id="result-meta" class="muted small"></span>
+      </div>
+      <div id="search-results" class="result-list">
+        <div class="empty-state">
+          <div class="empty-icon">⌖</div>
+          <div>Search to retrieve semantically relevant chunks across all your documents.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RIGHT: upload + ingest + activity -->
+  <aside class="panel right">
+    <div class="card glass">
+      <div class="panel-header">
+        <h2 class="panel-title">Upload file</h2>
+        <span class="muted small">PDF · DOCX · TXT · MD · CSV · max 20MB</span>
+      </div>
+      <label id="drop-zone" class="drop-zone">
+        <input type="file" id="file-input" multiple accept=".pdf,.docx,.txt,.md,.markdown,.csv" hidden>
+        <div class="drop-icon">⇧</div>
+        <div class="drop-text">Drop files here or <u>browse</u></div>
+        <div class="drop-hint muted small">Processing happens in the background; watch the activity stream below.</div>
+      </label>
+    </div>
+
+    <div class="card glass">
+      <div class="panel-header">
+        <h2 class="panel-title">Ingest URL</h2>
+        <span class="muted small">fetch + extract + index</span>
+      </div>
+      <form id="url-form" class="stack">
+        <input type="url" name="url" placeholder="https://example.com/article" required>
+        <button type="submit" class="btn btn-primary btn-sm">Fetch &amp; ingest</button>
+      </form>
+    </div>
+
+    <div class="card glass">
+      <div class="panel-header">
+        <h2 class="panel-title">Paste text</h2>
+      </div>
+      <form id="text-form" class="stack">
+        <input type="text" name="title" placeholder="Title" required>
+        <textarea name="text" rows="4" placeholder="Paste any text — at least 10 characters." required minlength="10"></textarea>
+        <button type="submit" class="btn btn-primary btn-sm">Ingest</button>
+      </form>
+    </div>
+
+    <div class="card glass activity-card">
+      <div class="panel-header">
+        <h2 class="panel-title">Activity</h2>
+        <button id="clear-log" class="btn btn-ghost btn-xs">clear</button>
+      </div>
+      <div id="activity-log" class="activity-log"></div>
+    </div>
+  </aside>
+</div>
+
+<!-- Doc detail modal — populated by dashboard.js -->
+<div id="doc-modal" class="modal-overlay hidden" aria-hidden="true">
+  <div class="modal glass" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <header class="modal-header">
+      <div class="modal-titles">
+        <h2 id="modal-title" class="modal-title">Document</h2>
+        <div id="modal-subtitle" class="modal-sub muted small"></div>
+      </div>
+      <button type="button" id="modal-close" class="btn btn-ghost btn-sm" aria-label="Close">×</button>
+    </header>
+
+    <div class="modal-body">
+      <section class="modal-section">
+        <h3 class="modal-section-title">Status</h3>
+        <div id="modal-status-row" class="modal-row"></div>
+      </section>
+
+      <section class="modal-section">
+        <h3 class="modal-section-title">Source</h3>
+        <div id="modal-source" class="modal-source mono small"></div>
+      </section>
+
+      <section class="modal-section">
+        <h3 class="modal-section-title">Extracted text (preview)</h3>
+        <pre id="modal-text" class="modal-text"></pre>
+      </section>
+
+      <section class="modal-section">
+        <h3 class="modal-section-title">Chunks <span id="modal-chunk-count" class="badge"></span></h3>
+        <div id="modal-chunks" class="modal-chunks"></div>
+      </section>
+    </div>
+
+    <footer class="modal-footer">
+      <button type="button" id="modal-delete" class="btn btn-ghost btn-sm danger">Delete document</button>
+      <span class="muted small">Deleting removes all chunks and any uploaded file.</span>
+    </footer>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  window.NEUROSEEK_CONFIG = {
+    apiBase: "/api/v1",
+    // Realtime Hub runs in its own container on :8001
+    wsUrl: (location.protocol === "https:" ? "wss://" : "ws://") + location.hostname + ":8001/ws/user/"
+  };
+</script>
+<script type="module" src="{% static 'js/dashboard.js' %}"></script>
+{% endblock %}

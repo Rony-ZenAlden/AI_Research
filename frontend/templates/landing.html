@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}NeuroSeek AI · An AI research operating system{% endblock %}
+
+{% block content %}
+<div class="landing">
+  <header class="landing-header">
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div class="brand-text">
+        <div class="brand-name">NeuroSeek AI</div>
+      </div>
+    </div>
+    <nav class="landing-nav">
+      <a href="/login" class="btn btn-ghost btn-sm">Sign in</a>
+      <a href="/login?tab=register" class="btn btn-primary btn-sm">Get started</a>
+    </nav>
+  </header>
+
+  <main class="landing-hero">
+    <div class="hero-eyebrow">Self-hosted · Lightweight · Open</div>
+    <h1 class="hero-title">
+      Search the web, chat with documents,<br>
+      ship cited research.
+    </h1>
+    <p class="hero-sub">
+      NeuroSeek is a retrieval-first AI research workspace. Ingest PDFs, articles, and live web pages
+      — then query them semantically with citations. Designed to run on a single 4&nbsp;GB VPS,
+      not a GPU cluster.
+    </p>
+    <div class="cta-row">
+      <a href="/login?tab=register" class="btn btn-primary">Create a free account</a>
+      <a href="/login" class="btn btn-ghost">Sign in</a>
+    </div>
+  </main>
+
+  <section class="landing-features">
+    <div class="feature-card glass">
+      <div class="feature-icon">⌖</div>
+      <h3>Semantic search</h3>
+      <p>pgvector + sentence-transformer embeddings find what you mean, not just what you typed.</p>
+    </div>
+    <div class="feature-card glass">
+      <div class="feature-icon">⇧</div>
+      <h3>Document RAG</h3>
+      <p>Upload PDF · DOCX · TXT · MD · CSV. Auto-chunked, embedded, and indexed in the background.</p>
+    </div>
+    <div class="feature-card glass">
+      <div class="feature-icon">🌐</div>
+      <h3>Live web research</h3>
+      <p>Self-hosted SearXNG meta-search across Google, Bing, DuckDuckGo. Ingest any URL with one click.</p>
+    </div>
+    <div class="feature-card glass">
+      <div class="feature-icon">⚡</div>
+      <h3>Realtime everything</h3>
+      <p>Go-powered WebSocket hub streams ingestion progress live — see chunks, embeddings, status updates as they happen.</p>
+    </div>
+  </section>
+
+  <footer class="landing-footer">
+    <div class="muted small">
+      Django · DRF · pgvector · SearXNG · Go · Vanilla JS — built for portfolio &amp; production.
+    </div>
+  </footer>
+</div>
+{% endblock %}

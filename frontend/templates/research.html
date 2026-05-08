@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Research · NeuroSeek AI{% endblock %}
+
+{% block content %}
+<header class="topbar glass">
+  <div class="brand small">
+    <div class="brand-mark small"></div>
+    <div class="brand-name">NeuroSeek AI</div>
+  </div>
+  <nav class="topbar-nav">
+    <a href="/app/" class="nav-link">Dashboard</a>
+    <a href="/app/research/" class="nav-link active">Research</a>
+  </nav>
+  <div class="topbar-right">
+    <div class="ws-pill" id="ws-pill" data-status="connecting">
+      <span class="ws-dot"></span>
+      <span class="ws-label" id="ws-label">connecting…</span>
+    </div>
+    <div class="user-chip">
+      <span class="user-avatar"></span>
+      <span id="user-email" class="user-email">…</span>
+    </div>
+    <button id="logout-btn" class="btn btn-ghost btn-sm">Sign out</button>
+  </div>
+</header>
+
+<div class="research-shell">
+  <!-- LEFT: past sessions -->
+  <aside class="panel research-sessions glass">
+    <div class="panel-header">
+      <h2 class="panel-title">Sessions</h2>
+      <span class="badge" id="session-count">0</span>
+    </div>
+    <div id="session-list" class="session-list">
+      <div class="empty-state small">No sessions yet.</div>
+    </div>
+  </aside>
+
+  <!-- RIGHT: workspace -->
+  <section class="panel research-main">
+    <div class="card glass research-input-card">
+      <div class="panel-header">
+        <h2 class="panel-title">Ask a research question</h2>
+        <span class="muted small">multi-step orchestration · live progress</span>
+      </div>
+      <form id="research-form" class="stack">
+        <textarea
+          id="question"
+          name="question"
+          rows="3"
+          minlength="10"
+          maxlength="2000"
+          placeholder="e.g. What's the best embedding model for low-resource servers in 2025?"
+          required></textarea>
+        <div class="research-actions">
+          <button id="start-btn" type="submit" class="btn btn-primary btn-sm">
+            <span class="btn-label">▶ Start research</span>
+            <span class="btn-spinner"></span>
+          </button>
+          <span class="muted small">
+            We plan queries, search the web, fetch &amp; index pages, retrieve, and write a cited report.
+          </span>
+        </div>
+      </form>
+    </div>
+
+    <div id="active-session" class="card glass active-session hidden">
+      <div class="active-header">
+        <h2 class="active-question" id="active-question">…</h2>
+        <div class="active-actions">
+          <span id="active-status-pill" class="status-pill"></span>
+          <div id="active-export" class="active-export hidden">
+            <button id="export-md" type="button" class="btn btn-export btn-export-md"
+                    data-tooltip="Download the report as a .md file.">
+              <span class="export-icon">📄</span>
+              <span class="export-label">Markdown</span>
+            </button>
+            <button id="export-pdf" type="button" class="btn btn-export btn-export-pdf"
+                    data-tooltip="Download the report as a typeset PDF.">
+              <span class="export-icon">📑</span>
+              <span class="export-label">PDF</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <ol id="active-steps" class="steps">
+        <li data-step="planning"><span class="step-dot"></span><span class="step-label">Plan queries</span><span class="step-msg muted small"></span></li>
+        <li data-step="searching"><span class="step-dot"></span><span class="step-label">Search web</span><span class="step-msg muted small"></span></li>
+        <li data-step="fetching"><span class="step-dot"></span><span class="step-label">Fetch &amp; index pages</span><span class="step-msg muted small"></span></li>
+        <li data-step="retrieving"><span class="step-dot"></span><span class="step-label">Retrieve passages</span><span class="step-msg muted small"></span></li>
+        <li data-step="synthesizing"><span class="step-dot"></span><span class="step-label">Synthesize report</span><span class="step-msg muted small"></span></li>
+      </ol>
+
+      <div id="active-fetch-log" class="fetch-log hidden"></div>
+
+      <div id="active-report" class="research-report hidden"></div>
+
+      <div id="active-error" class="research-error hidden"></div>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  window.NEUROSEEK_CONFIG = {
+    apiBase: "/api/v1",
+    wsUrl: (location.protocol === "https:" ? "wss://" : "ws://") + location.hostname + ":8001/ws/user/"
+  };
+</script>
+<script type="module" src="{% static 'js/research.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,50 @@
+# Self-hosted SearXNG — minimal config tailored for NeuroSeek.
+#
+# Notes:
+#   * `use_default_settings.engines.keep_only` whitelists only the engines we
+#     actually want — that disables all of SearXNG's other defaults (some of
+#     which return 403 / are unmaintained, like karmasearch and wikidata).
+#   * `formats: [html, json]` exposes both the JSON API (we use it) and the
+#     human UI (handy for debugging at http://localhost:8080).
+#   * SearXNG uses Redis DB 4 to stay clear of Django's cache (0), Celery (1,2)
+#     and Channels (3).
+#   * `secret_key` is replaced at container start by the SEARXNG_SECRET env var
+#     (handled by the upstream Docker entrypoint).
+use_default_settings:
+  engines:
+    keep_only:
+      - duckduckgo
+      - bing
+      - wikipedia
+      - google
+      - github
+
+server:
+  bind_address: "0.0.0.0"
+  port: 8080
+  secret_key: "change-me-via-SEARXNG_SECRET-env"
+  base_url: false
+  limiter: false
+  image_proxy: false
+  method: "POST"
+  default_http_headers:
+    X-Content-Type-Options: nosniff
+    X-Download-Options: noopen
+    X-Robots-Tag: noindex, nofollow
+    Referrer-Policy: no-referrer
+
+ui:
+  default_theme: simple
+  query_in_title: true
+  static_use_hash: true
+
+search:
+  formats:
+    - html
+    - json
+  default_lang: ""
+  safe_search: 1
+  autocomplete: ""
+
+redis:
+  url: redis://redis:6379/4
